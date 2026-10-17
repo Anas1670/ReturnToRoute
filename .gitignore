@@ -1,0 +1,28 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python virtual environment
+.venv/
+venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# macOS files
+.DS_Store
+
+# Database backups
+*.backup
+*.dump
+*.sql.gz
+
+# Editor files
+*.swp
+*.swo
+
+# Local logs
+*.log
