@@ -4,6 +4,7 @@ from flask_login import current_user
 from app.decorators import role_required
 from app.customer_queries import get_customer_returns
 
+from app.staff_queries import get_staff_returns
 
 dashboard = Blueprint("dashboard", __name__)
 
@@ -41,15 +42,23 @@ def customer_dashboard():
 def staff_dashboard():
     """
     Protected staff dashboard endpoint.
+
+    Return staff information and customer return requests.
     """
+
+    staff_id = int(current_user.id)
+
+    returns = get_staff_returns()
 
     return jsonify({
         "message": "Welcome to your staff dashboard",
         "user": {
-            "user_id": int(current_user.id),
+            "user_id": staff_id,
             "full_name": current_user.full_name,
             "role": current_user.role
         },
+        "return_count": len(returns),
+        "returns": returns,
         "features": [
             "Review return requests",
             "Approve routing decisions",
