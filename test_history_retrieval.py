@@ -24,7 +24,7 @@ try:
         cur.execute(
             """
             INSERT INTO users (full_name, email, password_hash, role)
-            VALUES (%s, %s, %s, 'customer')
+            VALUES (%s, %s, %s, 'staff')
             RETURNING user_id;
             """,
             (

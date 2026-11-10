@@ -25,7 +25,11 @@ class TestConnection:
 
 def expect_rejected(return_id, new_status):
     try:
-        update_return_status(return_id, new_status)
+        update_return_status(
+            return_id,
+            new_status,
+            changed_by=staff_id
+        )
     except ValueError:
         return
 
@@ -53,6 +57,21 @@ try:
             ),
         )
         customer_id = cur.fetchone()[0]
+
+        cur.execute(
+            """
+            INSERT INTO users (full_name, email, password_hash, role)
+            VALUES (%s, %s, %s, 'staff')
+            RETURNING user_id;
+            """,
+            (
+                "Workflow Test Staff",
+                f"workflow-staff-{unique_id}@example.com",
+                generate_password_hash("temporary-test-password"),
+            ),
+        )
+
+        staff_id = cur.fetchone()[0]
 
         cur.execute(
             """
@@ -92,15 +111,21 @@ try:
         return_id = new_return()
 
         result = update_return_status(
-            return_id, "Pending Inspection"
-        )
+    		return_id,
+    		"Pending Inspection",
+    		changed_by=staff_id
+	)
+
         assert result["new_status"] == "Pending Inspection"
         print("Test 1: PASS - Inspection transition allowed")
 
         # Test 2: Valid pending approval transition.
         result = update_return_status(
-            return_id, "Pending Approval"
-        )
+    		return_id,
+    		"Pending Approval",
+    		changed_by=staff_id
+	)
+
         assert result["new_status"] == "Pending Approval"
         print("Test 2: PASS - Pending approval allowed")
 
@@ -114,14 +139,21 @@ try:
         print("Test 4: PASS - Approval bypass rejected")
 
         # Test 5: Cancellation from Pending Approval.
+      
+        cancellation_return = new_return()
+
         result = update_return_status(
-            return_id, "Cancelled"
+            cancellation_return,
+            "Cancelled",
+            changed_by=customer_id
         )
+
         assert result["new_status"] == "Cancelled"
-        print("Test 5: PASS - Cancellation allowed")
+        print("Test 5: PASS - Customer cancellation allowed")
 
         # Test 6: Cancelled returns cannot restart.
-        expect_rejected(return_id, "Submitted")
+            
+        expect_rejected(cancellation_return, "Submitted")
         print("Test 6: PASS - Cancelled return protected")
 
         # Verify the rejected transitions did not
@@ -135,7 +167,7 @@ try:
                 """,
                 (return_id,),
             )
-            assert cur.fetchone()[0] == 3
+            assert cur.fetchone()[0] == 2
 
             cur.execute(
                 """

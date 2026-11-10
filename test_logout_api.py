@@ -51,7 +51,7 @@ try:
     # Temporary protected endpoint used only in this test.
     @app.route("/test-auth-status")
     @login_required
-    def test_auth_status():
+    def auth_status_endpoint():
         return jsonify({
             "authenticated": current_user.is_authenticated,
             "user_id": current_user.id,
