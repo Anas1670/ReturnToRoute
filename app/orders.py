@@ -11,11 +11,9 @@ def verify_purchased_item(
     """
     Verify that a purchased item belongs to the customer
     and matches the product being returned.
-
     When conn is provided, reuse the caller's transaction.
     Otherwise, open a connection for standalone verification.
     """
-
     if type(order_item_id) is not int or order_item_id <= 0:
         raise ValueError("A valid order item ID is required")
 
@@ -69,7 +67,7 @@ def verify_purchased_item(
 def get_customer_purchases(customer_id):
     """
     Retrieve purchased items belonging to one customer.
-    Include whether each purchased item already has a return.
+    Include existing returns and return eligibility.
     """
     with get_db_connection() as conn:
         with conn.cursor() as cur:
@@ -99,7 +97,9 @@ def get_customer_purchases(customer_id):
                 (customer_id,),
             )
 
-            columns = [column.name for column in cur.description]
+            columns = [
+                column.name for column in cur.description
+            ]
             rows = cur.fetchall()
 
     purchases = []
@@ -109,9 +109,25 @@ def get_customer_purchases(customer_id):
 
         item["order_date"] = item["order_date"].isoformat()
         item["unit_price"] = float(item["unit_price"])
+
         item["has_return"] = item["return_id"] is not None
+
+        item["can_request_return"] = (
+            not item["has_return"]
+            and item["quantity"] == 1
+        )
+
+        if item["has_return"]:
+            item["return_eligibility_reason"] = (
+                "A return already exists for this purchased item."
+            )
+        elif item["quantity"] != 1:
+            item["return_eligibility_reason"] = (
+                "Only single-unit purchased items are supported."
+            )
+        else:
+            item["return_eligibility_reason"] = None
 
         purchases.append(item)
 
     return purchases
-
