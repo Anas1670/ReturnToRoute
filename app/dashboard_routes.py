@@ -11,6 +11,7 @@ from app.decorators import role_required
 from app.customer_queries import get_customer_returns
 
 from app.staff_queries import get_staff_returns
+from app.orders import get_customer_purchases
 
 dashboard = Blueprint("dashboard", __name__)
 
@@ -41,6 +42,26 @@ def customer_dashboard():
             "View routing decisions"
         ]
     }), 200
+
+
+@dashboard.route("/api/customer/purchases", methods=["GET"])
+@role_required("customer")
+def customer_purchases():
+    """
+    Return purchase history for the authenticated customer.
+    """
+    customer_id = int(current_user.id)
+
+    purchases = get_customer_purchases(customer_id)
+
+    return jsonify({
+        "message": "Customer purchase history retrieved successfully.",
+        "purchase_count": len(purchases),
+        "purchases": purchases,
+    }), 200
+
+
+
 
 
 @dashboard.route("/api/staff/dashboard", methods=["GET"])

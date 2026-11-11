@@ -64,3 +64,54 @@ def verify_purchased_item(
         )
 
     return True
+
+
+def get_customer_purchases(customer_id):
+    """
+    Retrieve purchased items belonging to one customer.
+    Include whether each purchased item already has a return.
+    """
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    o.order_id,
+                    o.order_number,
+                    o.order_date,
+                    oi.order_item_id,
+                    oi.product_id,
+                    p.product_name,
+                    p.category,
+                    oi.quantity,
+                    oi.unit_price,
+                    rr.return_id
+                FROM orders o
+                JOIN order_items oi
+                    ON o.order_id = oi.order_id
+                JOIN products p
+                    ON oi.product_id = p.product_id
+                LEFT JOIN return_requests rr
+                    ON rr.order_item_id = oi.order_item_id
+                WHERE o.customer_id = %s
+                ORDER BY o.order_date DESC, oi.order_item_id DESC;
+                """,
+                (customer_id,),
+            )
+
+            columns = [column.name for column in cur.description]
+            rows = cur.fetchall()
+
+    purchases = []
+
+    for row in rows:
+        item = dict(zip(columns, row))
+
+        item["order_date"] = item["order_date"].isoformat()
+        item["unit_price"] = float(item["unit_price"])
+        item["has_return"] = item["return_id"] is not None
+
+        purchases.append(item)
+
+    return purchases
+
