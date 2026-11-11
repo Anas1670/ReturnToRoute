@@ -26,6 +26,7 @@ def customer_dashboard():
     customer_id = int(current_user.id)
 
     returns = get_customer_returns(customer_id)
+    purchases = get_customer_purchases(customer_id)
 
     return jsonify({
         "message": "Welcome to your customer dashboard",
@@ -36,9 +37,12 @@ def customer_dashboard():
         },
         "return_count": len(returns),
         "returns": returns,
+	"purchase_count": len(purchases),
+	"purchases": purchases,
         "features": [
             "Submit return requests",
             "Track return status",
+	    "View purchase history",
             "View routing decisions"
         ]
     }), 200
