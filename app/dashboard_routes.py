@@ -1,3 +1,4 @@
+
 from flask import Blueprint, jsonify, request
 from flask_login import current_user
 from psycopg.errors import UniqueViolation
@@ -6,12 +7,12 @@ from app.returns import create_return_request
 from app.status import update_return_status
 from app.decisions import save_routing_decision
 from app.reviews import approve_routing_decision
-
 from app.decorators import role_required
 from app.customer_queries import get_customer_returns
-
 from app.staff_queries import get_staff_returns
 from app.orders import get_customer_purchases
+from app.queries import get_return_request
+from app.history import get_return_history
 
 dashboard = Blueprint("dashboard", __name__)
 
@@ -22,9 +23,7 @@ def customer_dashboard():
     """
     Return customer information and their return requests.
     """
-
     customer_id = int(current_user.id)
-
     returns = get_customer_returns(customer_id)
     purchases = get_customer_purchases(customer_id)
 
@@ -37,12 +36,13 @@ def customer_dashboard():
         },
         "return_count": len(returns),
         "returns": returns,
-	"purchase_count": len(purchases),
-	"purchases": purchases,
+        "purchase_count": len(purchases),
+        "purchases": purchases,
         "features": [
             "Submit return requests",
             "Track return status",
-	    "View purchase history",
+            "View return status history",
+            "View purchase history",
             "View routing decisions"
         ]
     }), 200
@@ -55,7 +55,6 @@ def customer_purchases():
     Return purchase history for the authenticated customer.
     """
     customer_id = int(current_user.id)
-
     purchases = get_customer_purchases(customer_id)
 
     return jsonify({
@@ -65,7 +64,38 @@ def customer_purchases():
     }), 200
 
 
+@dashboard.route(
+    "/api/customer/returns/<int:return_id>/history",
+    methods=["GET"]
+)
+@role_required("customer")
+def customer_return_history(return_id):
+    """
+    Retrieve status history for a return owned by the
+    authenticated customer.
+    """
+    customer_id = int(current_user.id)
+    return_request = get_return_request(return_id)
 
+    if return_request is None:
+        return jsonify({
+            "error": "Return request not found."
+        }), 404
+
+    if int(return_request["customer_id"]) != customer_id:
+        return jsonify({
+            "error": "Return request not found."
+        }), 404
+
+    history = get_return_history(return_id)
+
+    return jsonify({
+        "message": "Return status history retrieved successfully.",
+        "return_id": return_id,
+        "current_status": return_request["status"],
+        "history_count": len(history),
+        "history": history
+    }), 200
 
 
 @dashboard.route("/api/staff/dashboard", methods=["GET"])
@@ -73,12 +103,9 @@ def customer_purchases():
 def staff_dashboard():
     """
     Protected staff dashboard endpoint.
-
     Return staff information and customer return requests.
     """
-
     staff_id = int(current_user.id)
-
     returns = get_staff_returns()
 
     return jsonify({
@@ -98,6 +125,7 @@ def staff_dashboard():
         ]
     }), 200
 
+
 @dashboard.route("/api/customer/returns", methods=["POST"])
 @role_required("customer")
 def submit_customer_return():
@@ -105,15 +133,12 @@ def submit_customer_return():
     Allow an authenticated customer to submit a return request.
     The customer ID comes from the authenticated session.
     """
-
     data = request.get_json(silent=True)
 
     if not isinstance(data, dict):
         return jsonify({
             "error": "A JSON object is required."
         }), 400
-
-    
 
     required_fields = [
         "product_id",
@@ -124,8 +149,6 @@ def submit_customer_return():
         "packaging_condition",
         "functionality",
     ]
-
-
 
     for field in required_fields:
         if field not in data:
@@ -147,9 +170,7 @@ def submit_customer_return():
             "error": "A valid order item ID is required."
         }), 400
 
-
     try:
-
         result = create_return_request(
             customer_id=int(current_user.id),
             product_id=product_id,
@@ -161,12 +182,10 @@ def submit_customer_return():
             order_item_id=order_item_id,
         )
 
-
     except (ValueError, TypeError, OverflowError) as error:
         return jsonify({
             "error": str(error)
         }), 400
-
 
     except UniqueViolation as error:
         if error.diag.constraint_name == "unique_return_order_item":
@@ -175,19 +194,21 @@ def submit_customer_return():
             }), 409
         raise
 
-
     return jsonify({
         "message": "Return request submitted successfully.",
         "return": result
     }), 201
 
-@dashboard.route("/api/staff/returns/<int:return_id>/status", methods=["PATCH"])
+
+@dashboard.route(
+    "/api/staff/returns/<int:return_id>/status",
+    methods=["PATCH"]
+)
 @role_required("staff")
 def staff_update_return_status(return_id):
     """
     Allow authenticated staff to update a return's status.
     """
-
     data = request.get_json(silent=True)
 
     if not isinstance(data, dict):
@@ -224,14 +245,17 @@ def staff_update_return_status(return_id):
         "return": result
     }), 200
 
-@dashboard.route("/api/staff/returns/<int:return_id>/recommend", methods=["POST"])
+
+@dashboard.route(
+    "/api/staff/returns/<int:return_id>/recommend",
+    methods=["POST"]
+)
 @role_required("staff")
 def staff_generate_recommendation(return_id):
     """
     Generate and save a routing recommendation for a return.
     Only authenticated staff members can perform this action.
     """
-
     try:
         result = save_routing_decision(return_id=return_id)
 
@@ -245,14 +269,17 @@ def staff_generate_recommendation(return_id):
         "decision": result
     }), 201
 
-@dashboard.route("/api/staff/returns/<int:return_id>/approve", methods=["POST"])
+
+@dashboard.route(
+    "/api/staff/returns/<int:return_id>/approve",
+    methods=["POST"]
+)
 @role_required("staff")
 def staff_approve_return(return_id):
     """
     Approve or override a routing recommendation.
     Only authenticated staff can perform this action.
     """
-
     data = request.get_json(silent=True)
 
     if not isinstance(data, dict):
