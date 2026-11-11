@@ -85,12 +85,44 @@ def test_staff_returns_data():
 
                 staff_id = cur.fetchone()[0]
 
+
             return_ids = []
 
             for customer_id in customer_ids:
+                # Create a purchase belonging to this customer.
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        INSERT INTO orders (
+                            order_number, customer_id, order_date
+                        )
+                        VALUES (%s, %s, %s)
+                        RETURNING order_id;
+                        """,
+                        (
+                            f"RTR-STAFF-{uuid4().hex}",
+                            customer_id,
+                            "2026-10-01",
+                        ),
+                    )
+                    order_id = cur.fetchone()[0]
+
+                    cur.execute(
+                        """
+                        INSERT INTO order_items (
+                            order_id, product_id, quantity, unit_price
+                        )
+                        VALUES (%s, %s, %s, %s)
+                        RETURNING order_item_id;
+                        """,
+                        (order_id, product_id, 1, 79.99),
+                    )
+                    order_item_id = cur.fetchone()[0]
+
                 result = create_return_request(
                     customer_id=customer_id,
                     product_id=product_id,
+                    order_item_id=order_item_id,
                     purchase_date="2026-10-01",
                     return_reason="Product no longer needed",
                     item_condition="good",
@@ -99,6 +131,7 @@ def test_staff_returns_data():
                 )
 
                 return_ids.append(result["return_id"])
+
 
             assert len(return_ids) == 2
 

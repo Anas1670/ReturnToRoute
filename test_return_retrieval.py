@@ -37,6 +37,32 @@ try:
         )
         product_id = cur.fetchone()[0]
 
+    # Create a matching purchase order for the temporary customer.
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO orders (order_number, customer_id, order_date)
+            VALUES (%s, %s, %s)
+            RETURNING order_id;
+            """,
+            (
+                f"RTR-RETRIEVAL-{customer_id}-{product_id}",
+                customer_id,
+                date.today(),
+            ),
+        )
+        order_id = cur.fetchone()[0]
+
+        cur.execute(
+            """
+            INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+            VALUES (%s, %s, %s, %s)
+            RETURNING order_item_id;
+            """,
+            (order_id, product_id, 1, 599.99),
+        )
+        order_item_id = cur.fetchone()[0]
+
     # Use one transaction so all temporary records can be rolled back.
     class TestConnection:
         def __enter__(self):
@@ -55,6 +81,7 @@ try:
         created = create_return_request(
             customer_id=customer_id,
             product_id=product_id,
+            order_item_id=order_item_id,
             purchase_date=date.today(),
             return_reason="Laptop does not meet expectations",
             item_condition="good",
@@ -71,6 +98,18 @@ try:
         assert retrieved["return_id"] == return_id
         assert retrieved["customer_id"] == customer_id
         assert retrieved["product_id"] == product_id
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT order_item_id
+                FROM return_requests
+                WHERE return_id = %s;
+                """,
+                (return_id,),
+            )
+            saved_order_item_id = cur.fetchone()[0]
+
+        assert saved_order_item_id == order_item_id
         assert retrieved["status"] == "Submitted"
 
         print("Test 1: PASS - Existing return retrieved")

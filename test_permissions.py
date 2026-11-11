@@ -88,15 +88,47 @@ try:
     ):
 
         def new_return(customer_id):
+            # Create a separate purchase for the correct customer.
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO orders (
+                        order_number, customer_id, order_date
+                    )
+                    VALUES (%s, %s, %s)
+                    RETURNING order_id;
+                    """,
+                    (
+                        f"RTR-PERM-{uuid4().hex}",
+                        customer_id,
+                        date.today(),
+                    ),
+                )
+                order_id = cur.fetchone()[0]
+
+                cur.execute(
+                    """
+                    INSERT INTO order_items (
+                        order_id, product_id, quantity, unit_price
+                    )
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING order_item_id;
+                    """,
+                    (order_id, product_id, 1, 99.99),
+                )
+                order_item_id = cur.fetchone()[0]
+
             result = create_return_request(
                 customer_id=customer_id,
                 product_id=product_id,
+                order_item_id=order_item_id,
                 purchase_date=date.today(),
                 return_reason="Testing role authorization",
                 item_condition="good",
                 packaging_condition="opened",
                 functionality="working",
             )
+
             return result["return_id"]
 
         return1 = new_return(customer1)

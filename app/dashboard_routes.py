@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from flask_login import current_user
+from psycopg.errors import UniqueViolation
 
 from app.returns import create_return_request
 from app.status import update_return_status
@@ -87,14 +88,19 @@ def submit_customer_return():
             "error": "A JSON object is required."
         }), 400
 
+    
+
     required_fields = [
         "product_id",
+        "order_item_id",
         "purchase_date",
         "return_reason",
         "item_condition",
         "packaging_condition",
         "functionality",
     ]
+
+
 
     for field in required_fields:
         if field not in data:
@@ -109,7 +115,16 @@ def submit_customer_return():
             "error": "A valid product ID is required."
         }), 400
 
+    order_item_id = data["order_item_id"]
+
+    if type(order_item_id) is not int or order_item_id <= 0:
+        return jsonify({
+            "error": "A valid order item ID is required."
+        }), 400
+
+
     try:
+
         result = create_return_request(
             customer_id=int(current_user.id),
             product_id=product_id,
@@ -118,12 +133,23 @@ def submit_customer_return():
             item_condition=data["item_condition"],
             packaging_condition=data["packaging_condition"],
             functionality=data["functionality"],
+            order_item_id=order_item_id,
         )
+
 
     except (ValueError, TypeError, OverflowError) as error:
         return jsonify({
             "error": str(error)
         }), 400
+
+
+    except UniqueViolation as error:
+        if error.diag.constraint_name == "unique_return_order_item":
+            return jsonify({
+                "error": "A return already exists for this purchased item."
+            }), 409
+        raise
+
 
     return jsonify({
         "message": "Return request submitted successfully.",

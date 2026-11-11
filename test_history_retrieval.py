@@ -45,6 +45,31 @@ try:
         )
         product_id = cur.fetchone()[0]
 
+        # Create a purchase order for the temporary test user.
+        cur.execute(
+            """
+            INSERT INTO orders (order_number, customer_id, order_date)
+            VALUES (%s, %s, %s)
+            RETURNING order_id;
+            """,
+            (
+                f"RTR-HISTORY-{customer_id}-{product_id}",
+                customer_id,
+                date.today(),
+            ),
+        )
+        order_id = cur.fetchone()[0]
+
+        cur.execute(
+            """
+            INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+            VALUES (%s, %s, %s, %s)
+            RETURNING order_item_id;
+            """,
+            (order_id, product_id, 1, 249.99),
+        )
+        order_item_id = cur.fetchone()[0]
+
     # Share one database transaction for the entire test.
     test_connection = TestConnection()
 
@@ -61,6 +86,7 @@ try:
         created = create_return_request(
             customer_id=customer_id,
             product_id=product_id,
+            order_item_id=order_item_id,
             purchase_date=date.today(),
             return_reason="Tablet does not meet expectations",
             item_condition="good",
