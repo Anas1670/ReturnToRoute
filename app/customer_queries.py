@@ -1,12 +1,13 @@
+
 from app.db import get_db_connection
 
 
 def get_customer_returns(customer_id):
     """
     Retrieve return requests belonging to one customer.
+    Include associated purchase information when available.
     Most recently submitted returns appear first.
     """
-
     try:
         customer_id = int(customer_id)
     except (TypeError, ValueError):
@@ -29,16 +30,21 @@ def get_customer_returns(customer_id):
                     r.packaging_condition,
                     r.functionality,
                     r.status,
-                    r.submitted_at
+                    r.submitted_at,
+                    r.order_item_id,
+                    o.order_number
                 FROM return_requests AS r
                 JOIN products AS p
                     ON r.product_id = p.product_id
+                LEFT JOIN order_items AS oi
+                    ON r.order_item_id = oi.order_item_id
+                LEFT JOIN orders AS o
+                    ON oi.order_id = o.order_id
                 WHERE r.customer_id = %s
                 ORDER BY r.submitted_at DESC, r.return_id DESC;
                 """,
                 (customer_id,),
             )
-
             rows = cur.fetchall()
 
     return [
@@ -53,6 +59,8 @@ def get_customer_returns(customer_id):
             "functionality": row[7],
             "status": row[8],
             "submitted_at": row[9].isoformat(),
+            "order_item_id": row[10],
+            "order_number": row[11],
         }
         for row in rows
     ]
