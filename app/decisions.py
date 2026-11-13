@@ -94,3 +94,49 @@ def save_routing_decision(return_id):
         "explanation": recommendation["explanation"],
         "approval_required": True,
     }
+
+
+def save_manual_decision(return_id, staff_id, final_route, reason):
+    """Save a staff-chosen route, without running the recommendation engine."""
+    from app.reviews import VALID_ROUTES
+
+    if final_route not in VALID_ROUTES:
+        raise ValueError("Invalid manual route")
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValueError("A reason for the manual decision is required")
+    reason = reason.strip()
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT role FROM users WHERE user_id = %s", (staff_id,))
+            staff = cur.fetchone()
+            if not staff or staff[0] != "staff":
+                raise PermissionError("Only staff may make manual decisions")
+            cur.execute(
+                "SELECT status FROM return_requests WHERE return_id = %s FOR UPDATE",
+                (return_id,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise ValueError("Return request not found")
+            if row[0] not in {"Submitted", "Pending Inspection", "Pending Approval"}:
+                raise ValueError("Manual decision is not permitted for this status")
+            cur.execute(
+                "SELECT decision_id FROM routing_decisions WHERE return_id = %s LIMIT 1",
+                (return_id,),
+            )
+            if cur.fetchone():
+                raise ValueError("A routing decision already exists for this return")
+            cur.execute(
+                """INSERT INTO routing_decisions
+                   (return_id, recommended_route, rule_applied, explanation)
+                   VALUES (%s, %s, %s, %s) RETURNING decision_id""",
+                (return_id, final_route, "MANUAL_STAFF",
+                 f"Manual staff decision by user #{staff_id}. Reason: {reason}"),
+            )
+            decision_id = cur.fetchone()[0]
+    return {
+        "decision_id": decision_id, "return_id": return_id,
+        "final_route": final_route, "decision_source": "manual",
+        "approval_required": True,
+    }

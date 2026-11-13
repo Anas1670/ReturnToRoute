@@ -5,7 +5,7 @@ from psycopg.errors import UniqueViolation
 
 from app.returns import create_return_request
 from app.status import update_return_status
-from app.decisions import save_routing_decision
+from app.decisions import save_routing_decision, save_manual_decision
 from app.reviews import approve_routing_decision
 from app.decorators import role_required
 from app.customer_queries import get_customer_returns
@@ -324,3 +324,24 @@ def staff_approve_return(return_id):
         "message": "Routing decision approved successfully.",
         "review": result
     }), 200
+
+
+@dashboard.route("/api/staff/returns/<int:return_id>/manual-decision", methods=["POST"])
+@role_required("staff")
+def staff_manual_decision(return_id):
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "A JSON object is required."}), 400
+    try:
+        result = save_manual_decision(
+            return_id=return_id,
+            staff_id=int(current_user.id),
+            final_route=data.get("final_route"),
+            reason=data.get("reason"),
+        )
+    except (ValueError, TypeError) as error:
+        return jsonify({"error": str(error)}), 400
+    except PermissionError as error:
+        return jsonify({"error": str(error)}), 403
+    return jsonify({"message": "Manual route saved; approval is still required.",
+                    "decision": result}), 201

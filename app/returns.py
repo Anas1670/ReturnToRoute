@@ -4,6 +4,7 @@ from datetime import date
 from app.db import get_db_connection
 from app.orders import verify_purchased_item
 from app.rules import recommend_route
+from app.returnless_policy import evaluate_returnless_refund
 
 
 def create_return_request(
@@ -110,7 +111,39 @@ def create_return_request(
 
             result = cur.fetchone()
 
+            # Automatic exception: simulated refund only, no payment processor.
+            cur.execute(
+                "SELECT unit_price FROM order_items WHERE order_item_id = %s",
+                (order_item_id,),
+            )
+            unit_price = cur.fetchone()[0]
+            economics = evaluate_returnless_refund(
+                unit_price, item_condition, packaging_condition, functionality
+            )
+            if economics["eligible"]:
+                cur.execute(
+                    """INSERT INTO simulated_returnless_refunds
+                       (return_id, order_item_id, refund_amount, recovery_cost, recoverable_value)
+                       VALUES (%s, %s, %s, %s, %s)""",
+                    (result[0], order_item_id, economics["purchase_price"],
+                     economics["recovery_cost"], economics["recoverable_value"]),
+                )
+                cur.execute(
+                    "UPDATE return_requests SET status = 'Completed' WHERE return_id = %s",
+                    (result[0],),
+                )
+                cur.execute(
+                    """INSERT INTO return_status_history
+                       (return_id, changed_by, old_status, new_status)
+                       VALUES (%s, %s, 'Submitted', 'Completed')""",
+                    (result[0], customer_id),
+                )
+                result = (result[0], 'Completed')
+
     return {
         "return_id": result[0],
         "status": result[1],
+        "returnless_refund": bool(economics["eligible"]),
+        "simulated_refund_amount": str(economics["purchase_price"]) if economics["eligible"] else None,
+        "message": "Simulated returnless refund; customer keeps item. No real funds transferred." if economics["eligible"] else "Staff review required.",
     }

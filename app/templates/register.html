@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | Return-to-Route</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <main class="auth-container">
+        <section class="auth-card">
+            <h1>Create Your Account</h1>
+            <p>Join Return-to-Route to manage your product returns.</p>
+
+            <form id="register-form">
+<div class="form-group">
+  <label for="account-role">Account Type</label>
+  <select id="account-role" name="role" required
+          style="display:block;width:100%;padding:12px;margin:10px 0 18px">
+    <option value="customer">Customer</option>
+    <option value="staff">Staff</option>
+  </select>
+</div>
+
+                <label for="full-name">Full Name</label>
+                <input type="text"
+                       id="full-name"
+                       name="full_name"
+                       maxlength="150"
+                       autocomplete="name"
+                       required>
+
+                <label for="email">Email Address</label>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       maxlength="254"
+                       autocomplete="email"
+                       required>
+
+                <label for="phone-number">Phone Number</label>
+                <input type="tel"
+                       id="phone-number"
+                       name="phone_number"
+                       maxlength="20"
+                       autocomplete="tel"
+                       placeholder="+1 555 123 4567"
+                       required>
+
+                <label for="date-of-birth">Date of Birth</label>
+                <input type="date"
+                       id="date-of-birth"
+                       name="date_of_birth"
+                       autocomplete="bday"
+                       required>
+
+                <label for="gender">Gender (Optional)</label>
+                <select id="gender" name="gender">
+                    <option value="">Select an option</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="non_binary">Non-binary</option>
+                    <option value="prefer_not_to_say">
+                        Prefer not to say
+                    </option>
+                </select>
+
+                <label for="password">Password</label>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       minlength="8"
+                       maxlength="128"
+                       autocomplete="new-password"
+                       required>
+
+                <label for="confirm-password">
+                    Confirm Password
+                </label>
+                <input type="password"
+                       id="confirm-password"
+                       name="confirm_password"
+                       minlength="8"
+                       maxlength="128"
+                       autocomplete="new-password"
+                       required>
+
+                <p id="register-message"
+                   role="status"
+                   aria-live="polite"></p>
+
+                <button type="submit">
+                    Create Account
+                </button>
+            </form>
+
+            <p>
+                Already have an account?
+                <a href="/login">Sign In</a>
+            </p>
+
+            <p>
+                <a href="/">Back to Home</a>
+            </p>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/register.js') }}"
+            defer></script>
+</body>
+</html>

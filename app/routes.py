@@ -1,17 +1,60 @@
-from flask import Blueprint, request, jsonify
+from flask import (
+    Blueprint,
+    request,
+    jsonify,
+    render_template,
+    redirect,
+    url_for
+)
+from flask_login import current_user
+
 from app.rules import recommend_route
-from app.staff_queries import get_staff_returns
+
+
 main = Blueprint("main", __name__)
 
 
 @main.route("/")
 def home():
-    return """
-    <h1>Return-to-Route</h1>
-    <h2>Smart Product Return Management System</h2>
-    <p>Welcome to Return-to-Route!</p>
-    <p>Our Flask application is running successfully.</p>
+    return render_template("index.html")
+
+
+@main.route("/login", methods=["GET"])
+def login_page():
+    return render_template("login.html")
+
+
+@main.route("/register", methods=["GET"])
+def register_page():
+    return render_template("register.html")
+
+
+@main.route("/dashboard", methods=["GET"])
+def dashboard_redirect():
+    """Send each signed-in user to the dashboard for their role."""
+    if not current_user.is_authenticated:
+        return redirect(url_for("main.login_page"))
+
+    if current_user.role == "customer":
+        return redirect(url_for("main.customer_dashboard_page"))
+    if current_user.role == "staff":
+        return redirect(url_for("main.staff_dashboard_page"))
+
+    return jsonify({"error": "Unsupported account role."}), 403
+
+
+@main.route("/customer/dashboard", methods=["GET"])
+def customer_dashboard_page():
     """
+    Display the dashboard only to authenticated customers.
+    """
+    if not current_user.is_authenticated:
+        return redirect(url_for("main.login_page"))
+
+    if current_user.role != "customer":
+        return redirect(url_for("main.dashboard_redirect"))
+
+    return render_template("customer_dashboard.html")
 
 
 @main.route("/api/recommend", methods=["POST"])
@@ -54,3 +97,20 @@ def recommend():
         return jsonify({
             "error": str(error)
         }), 400
+
+
+@main.route("/staff/dashboard", methods=["GET"])
+def staff_dashboard_page():
+    """Display the staff dashboard to authenticated staff."""
+    if not current_user.is_authenticated:
+        return redirect(url_for("main.login_page"))
+
+    if current_user.role != "staff":
+        return redirect(url_for("main.dashboard_redirect"))
+
+    return render_template("staff_dashboard.html")
+
+
+@main.route("/faq", methods=["GET"])
+def faq_page():
+    return render_template("faq.html")

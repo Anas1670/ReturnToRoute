@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return-to-Route | Smart Product Returns</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+.rtr-auth-nav {display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 18px 14px}
+.rtr-auth-nav a {text-decoration:none;font-weight:700;color:#175cd3;border:1px solid #cbdaf0;background:#fff;padding:9px 16px;border-radius:9px}
+.rtr-auth-nav a.rtr-auth-primary {background:#175cd3;color:white;border-color:#175cd3}
+.rtr-auth-nav a:hover {filter:brightness(.94)}
+</style>
+</head>
+<body>
+    <header class="site-header">
+        <nav class="rtr-auth-nav" aria-label="Account navigation">
+            <a href="/login">Sign In</a>
+            <a href="/register" class="rtr-auth-primary">Create Account</a>
+            <a href="{{ url_for('main.dashboard_redirect') }}">My Dashboard</a>
+        <a href="{{ url_for('main.faq_page') }}">FAQs</a>
+</nav>
+        <div class="container">
+            <h1>Return-to-Route</h1>
+            <p>Smart Product Return Management System</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h2>Smarter Returns. Better Decisions.</h2>
+                <p>
+                    Manage product returns efficiently with
+                    Return-to-Route, a smart return management
+                    system designed for customers and businesses.
+                </p>
+                <div class="hero-actions">
+                    <a href="#how-it-works" class="button">
+                        Learn How It Works
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works" class="features">
+            <div class="container">
+                <h2>How Return-to-Route Works</h2>
+                <div class="feature-grid">
+                    <article class="feature-card">
+                        <h3>1. Submit a Return</h3>
+                        <p>Customers submit return requests for eligible purchased products.</p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>2. Evaluate the Product</h3>
+                        <p>Our rule-based system evaluates product condition, packaging, and functionality.</p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>3. Staff Review</h3>
+                        <p>Authorized staff review routing recommendations before approving the final return route.</p>
+                    </article>
+
+                    <article class="feature-card">
+                        <h3>4. Track Progress</h3>
+                        <p>Customers can monitor return statuses and review their return history.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2026 Return-to-Route. Smart Product Return Management System.</p>
+        </div>
+    </footer>
+</body>
+</html>

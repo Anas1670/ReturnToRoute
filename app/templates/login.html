@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Return-to-Route</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="container">
+            <h1>Return-to-Route</h1>
+            <p>Smart Product Return Management System</p>
+        </div>
+    </header>
+
+    <main class="login-page">
+        <section class="login-container">
+            <h2>Welcome Back</h2>
+            <p class="login-description">
+                Sign in to manage your product returns.
+            </p>
+
+            <form id="login-form">
+<div class="form-group">
+  <label for="account-role">Account Type</label>
+  <select id="account-role" name="role" required
+          style="display:block;width:100%;padding:12px;margin:10px 0 18px">
+    <option value="customer">Customer</option>
+    <option value="staff">Staff</option>
+  </select>
+</div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email"
+                           placeholder="Enter your email"
+                           autocomplete="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password"
+                           placeholder="Enter your password"
+                           autocomplete="current-password" required>
+                </div>
+
+                <p id="login-message" class="login-message"
+                   role="status" aria-live="polite"></p>
+
+                <button type="submit" class="button login-button">
+                    Sign In
+                </button>
+            </form>
+
+            <p class="back-home">
+                Don't have an account?
+                <a href="/register">Create an Account</a>
+            </p>
+
+
+            <p class="back-home">
+                <a href="/">Back to Homepage</a>
+            </p>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2026 Return-to-Route.
+               Smart Product Return Management System.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/login.js') }}"
+            defer></script>
+</body>
+</html>

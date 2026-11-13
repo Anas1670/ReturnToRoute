@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staff Dashboard | Return-to-Route</title>
+<link rel="stylesheet" href="/static/css/style.css"><link rel="stylesheet" href="/static/css/customer_polish.css"><link rel="stylesheet" href="/static/css/staff_polish.css">
+<script src="/static/js/product_image_manifest.js"></script></head><body>
+<header class="site-header"><div class="container dashboard-header"><div><h1>Return-to-Route</h1><p>Staff Dashboard</p></div><a class="rtr-home-link" href="/">Home</a><button id="logout" class="button dashboard-logout">Log Out</button></div></header>
+<main class="container dashboard-main"><section class="dashboard-welcome"><h2>Welcome to Staff Return Management</h2><p id="welcome">Loading staff account...</p><p>Review products, generate routing recommendations, and approve return decisions.</p></section>
+<section class="dashboard-navigation"><a class="dashboard-nav-card" href="#staff-returns"><h3>Return Requests</h3><p>Review incoming requests and inspect product details.</p></a><a class="dashboard-nav-card" href="#staff-approved"><h3>Approved</h3><p>Review approved returns awaiting processing.</p></a><a class="dashboard-nav-card" href="#staff-processing"><h3>Processing</h3><p>View returns currently being processed.</p></a><a class="dashboard-nav-card" href="#staff-completed"><h3>Completed</h3><p>Review finished return requests.</p></a></section>
+<section class="dashboard-summary"><article class="dashboard-stat"><h3>Total Returns</h3><p id="count">—</p><span>All return requests</span></article><article class="dashboard-stat"><h3>Active Returns</h3><p id="open-count">—</p><span>Not yet completed or cancelled</span></article><article class="dashboard-stat"><h3>Awaiting Approval</h3><p id="approval-count">—</p><span>Ready for staff decisions</span></article></section>
+<p id="message" role="status" aria-live="polite"></p>
+<section class="dashboard-section" id="staff-returns"><div class="dashboard-section-header staff-heading"><div><h2>Return Requests</h2><p>Manage customer returns and routing decisions.</p></div><button id="refresh" class="staff-action staff-recommend">Refresh Returns</button></div><div id="returns-body" class="staff-return-grid"></div></section>
+<section class="dashboard-section staff-status-section" id="staff-approved"><div class="dashboard-section-header staff-heading"><div><h2>Approved Returns <span id="approved-count" class="staff-section-count">0</span></h2><p>Approved returns awaiting processing. Select Processing to begin work.</p></div></div><div id="approved-body" class="staff-return-grid"></div></section>
+<section class="dashboard-section staff-status-section" id="staff-processing"><div class="dashboard-section-header staff-heading"><div><h2>Processing Returns <span id="processing-count" class="staff-section-count">0</span></h2><p>Approved returns currently being processed. Mark them Completed when finished.</p></div></div><div id="processing-body" class="staff-return-grid"></div></section>
+<section class="dashboard-section staff-status-section" id="staff-completed"><div class="dashboard-section-header staff-heading"><div><h2>Completed Returns <span id="completed-count" class="staff-section-count">0</span></h2><p>Previously completed returns, shown for reference.</p></div></div><div id="completed-body" class="staff-return-grid"></div></section>
+</main><script>
+"use strict";
+
+const body = document.getElementById("returns-body");
+const message = document.getElementById("message");
+let busy = false;
+
+function notify(text, error = false) {
+  message.textContent = text;
+  message.className = error ? "error" : "success";
+}
+
+async function api(url, method = "GET", payload) {
+  const options = { method, credentials: "same-origin" };
+  if (payload !== undefined) {
+    options.headers = { "Content-Type": "application/json" };
+    options.body = JSON.stringify(payload);
+  }
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed (${response.status})`);
+  }
+  return data;
+}
+
+function cell(row, value) {
+  const td = document.createElement("td");
+  td.textContent = value == null ? "—" : String(value);
+  row.appendChild(td);
+  return td;
+}
+
+function action(container, label, handler) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = label;
+  button.className = "staff-action " + (label.includes("Cancel") ? "staff-danger" : label.includes("Approve") ? "staff-approve" : label.includes("Recommend") ? "staff-recommend" : label.includes("Manual") ? "staff-approve" : "staff-progress");
+  button.addEventListener("click", async () => {
+    if (busy) return;
+    busy = true;
+    document.querySelectorAll("button").forEach(b => b.disabled = true);
+    try {
+      const completed = await handler();
+      if (completed !== false) await load();
+    } catch (error) {
+      notify(error.message, true);
+    } finally {
+      busy = false;
+      document.querySelectorAll("button").forEach(b => b.disabled = false);
+    }
+  });
+  container.appendChild(button);
+}
+
+function manualDecisionDialog(returnId) {
+  return new Promise(resolve => {
+    const dialog = document.createElement("dialog");
+    dialog.setAttribute("aria-label", "Manual routing decision");
+    dialog.style.cssText = "border:0;border-radius:14px;padding:26px;width:min(440px,calc(100vw - 36px));box-shadow:0 18px 55px #0004;color:#182b46;";
+    dialog.innerHTML = `
+      <form method="dialog" style="display:grid;gap:13px;font:inherit">
+        <h2 style="margin:0;font-size:1.3rem">Manual Decision · Return #${returnId}</h2>
+        <label for="manual-route">Select a return route</label>
+        <select id="manual-route" required style="width:100%;padding:11px;border:1px solid #9ca3af;border-radius:7px;font:inherit">
+          <option value="" selected disabled>Choose a route…</option>
+          <option value="Restock">Restock</option>
+          <option value="Refurbish">Refurbish</option>
+          <option value="Recycle">Recycle</option>
+          <option value="Dispose">Dispose</option>
+        </select>
+        <label for="manual-reason">Reason for this decision</label>
+        <textarea id="manual-reason" required rows="3" maxlength="1000" placeholder="Explain why you selected this route…" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #9ca3af;border-radius:7px;font:inherit"></textarea>
+        <p style="margin:0;color:#526174;font-size:.87rem">Saving this decision does not approve the return.</p>
+        <div style="display:flex;justify-content:flex-end;gap:10px">
+          <button type="button" id="manual-cancel" style="padding:9px 17px">Cancel</button>
+          <button type="submit" style="padding:9px 17px;border:0;border-radius:7px;background:#087c58;color:white;font-weight:700">Save Decision</button>
+        </div>
+      </form>`;
+    document.body.appendChild(dialog);
+    const form = dialog.querySelector("form");
+    let result = null;
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const final_route = dialog.querySelector("#manual-route").value;
+      const reason = dialog.querySelector("#manual-reason").value.trim();
+      if (!final_route || !reason) {
+        if (!reason) dialog.querySelector("#manual-reason").setCustomValidity("Please provide a reason.");
+        form.reportValidity();
+        return;
+      }
+      result = {final_route, reason};
+      dialog.close();
+    });
+    dialog.querySelector("#manual-reason").addEventListener("input", e => e.target.setCustomValidity(""));
+    dialog.querySelector("#manual-cancel").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("close", () => { dialog.remove(); resolve(result); }, {once:true});
+    dialog.showModal();
+  });
+}
+
+function approvalReviewDialog(item) {
+  return new Promise(resolve => {
+    const routes = ["Restock", "Refurbish", "Recycle", "Dispose"];
+    const recommended = item.recommended_route;
+    const manual = item.decision_source === "manual";
+    if (!routes.includes(recommended)) { resolve(null); notify("This return has no valid saved route.", true); return; }
+    const dialog = document.createElement("dialog");
+    dialog.setAttribute("aria-label", "Review routing decision");
+    dialog.style.cssText = "border:0;border-radius:14px;padding:26px;width:min(470px,calc(100vw - 36px));box-shadow:0 18px 55px #0004;color:#182b46;";
+    dialog.innerHTML = `
+      <form method="dialog" style="display:grid;gap:14px;font:inherit">
+        <h2 style="margin:0;font-size:1.3rem">Review Decision · Return #${Number(item.return_id)}</h2>
+        <div style="background:#edf3fb;border-radius:9px;padding:14px">
+          <div style="font-size:.85rem;color:#475569">${manual ? "Saved manual staff route" : "System recommendation"}</div>
+          <strong id="approval-suggested" style="font-size:1.25rem"></strong>
+        </div>
+        <label style="display:flex;gap:9px;align-items:center"><input type="radio" name="approval-choice" value="accept" checked> Accept the ${manual ? "manual decision" : "recommendation"}</label>
+        <label style="display:flex;gap:9px;align-items:center"><input type="radio" name="approval-choice" value="override"> Change the route</label>
+        <div id="approval-override" hidden style="display:grid;gap:9px">
+          <label for="approval-route">Choose final route</label>
+          <select id="approval-route" style="width:100%;padding:10px;border:1px solid #9ca3af;border-radius:7px;font:inherit"></select>
+          <label for="approval-reason">Reason for changing the route</label>
+          <textarea id="approval-reason" rows="3" maxlength="1000" placeholder="Explain why this route is more appropriate…" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #9ca3af;border-radius:7px;font:inherit"></textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px">
+          <button type="button" id="approval-cancel" style="padding:9px 17px">Cancel</button>
+          <button type="submit" style="padding:9px 17px;border:0;border-radius:7px;background:#087c58;color:white;font-weight:700">Confirm Decision</button>
+        </div>
+      </form>`;
+    document.body.appendChild(dialog);
+    dialog.querySelector("#approval-suggested").textContent = recommended;
+    const select = dialog.querySelector("#approval-route");
+    routes.forEach(route => { const option = document.createElement("option"); option.value = route; option.textContent = route; select.appendChild(option); });
+    select.value = routes.find(route => route !== recommended);
+    const overrideBox = dialog.querySelector("#approval-override");
+    overrideBox.style.display = "none";
+    const reasonField = dialog.querySelector("#approval-reason");
+    dialog.querySelectorAll('input[name="approval-choice"]').forEach(input => input.addEventListener("change", () => {
+      overrideBox.style.display = dialog.querySelector('input[name="approval-choice"]:checked').value === "override" ? "grid" : "none";
+    }));
+    let result = null;
+    dialog.querySelector("form").addEventListener("submit", event => {
+      event.preventDefault();
+      const override = dialog.querySelector('input[name="approval-choice"]:checked').value === "override";
+      const finalRoute = override ? select.value : recommended;
+      const reason = reasonField.value.trim();
+      if (override && finalRoute !== recommended && !reason) {
+        reasonField.setCustomValidity("Please explain why you changed the route.");
+        reasonField.reportValidity();
+        return;
+      }
+      result = {final_route: finalRoute, override_reason: finalRoute === recommended ? null : reason};
+      dialog.close();
+    });
+    reasonField.addEventListener("input", () => reasonField.setCustomValidity(""));
+    dialog.querySelector("#approval-cancel").addEventListener("click", () => dialog.close());
+    dialog.addEventListener("close", () => { dialog.remove(); resolve(result); }, {once:true});
+    dialog.showModal();
+  });
+}
+
+async function load() {
+  const data = await api("/api/staff/dashboard");
+  document.getElementById("welcome").textContent =
+    `Signed in as ${data.user.full_name}`;
+  document.getElementById("count").textContent = data.return_count;
+  body.replaceChildren();
+  const approvedBody = document.getElementById("approved-body");
+  const processingBody = document.getElementById("processing-body");
+  const completedBody = document.getElementById("completed-body");
+  approvedBody.replaceChildren();
+  processingBody.replaceChildren();
+  completedBody.replaceChildren();
+  document.getElementById("approved-count").textContent = data.returns.filter(x => x.status === "Approved").length;
+  document.getElementById("processing-count").textContent = data.returns.filter(x => x.status === "Processing").length;
+  document.getElementById("completed-count").textContent = data.returns.filter(x => x.status === "Completed").length;
+
+  document.getElementById("open-count").textContent = data.returns.filter(x => !["Completed", "Cancelled"].includes(x.status)).length;
+  document.getElementById("approval-count").textContent = data.returns.filter(x => x.status === "Pending Approval").length;
+  for (const item of data.returns) {
+    const card = document.createElement("article");
+    card.className = "staff-return-card";
+    const top = document.createElement("div"); top.className = "staff-card-top";
+    const img = document.createElement("img"); img.className = "staff-product-image";
+    img.loading = "lazy"; img.alt = `Photo of ${item.product_name}`;
+    const kind = ["headphones","backpack","notebook","organizer","speaker","bottle","pillow","shirt","mouse","cable","stand","lamp","towel","case","mug"].find(x => (item.product_name || "").toLowerCase().includes(x)) || "package";
+    const fallback = `/static/images/product-thumbnails/${kind}.svg`;
+    const file = (window.RTR_PRODUCT_IMAGES || {})[String(item.product_id)];
+    img.onerror = () => { img.onerror = null; img.src = fallback; };
+    img.src = file ? `/static/images/catalog/${encodeURIComponent(file)}` : fallback;
+    top.appendChild(img);
+    const info = document.createElement("div");
+    const name = document.createElement("h3"); name.textContent = item.product_name; info.appendChild(name);
+    const sub = document.createElement("p"); sub.className = "muted"; sub.textContent = `Return #${item.return_id} · ${item.category || "Product"}`; info.appendChild(sub);
+    top.appendChild(info); card.appendChild(top);
+    const details = document.createElement("div"); details.className = "staff-card-details";
+    const addDetail = (label, value) => { const p = document.createElement("p"); const b = document.createElement("strong"); b.textContent = label + ": "; p.appendChild(b); p.appendChild(document.createTextNode(value || "—")); details.appendChild(p); };
+    const humanize = value => value == null || value === "" ? "—" : String(value).replaceAll("_", " ").replace(/\b\w/g, ch => ch.toUpperCase());
+    const sentence = value => {
+      const text = String(value || "").trim();
+      return text ? (/[.!?]$/.test(text) ? text : text + ".") : "—";
+    };
+    addDetail("Customer", item.customer_name);
+    addDetail("Item condition", humanize(item.item_condition));
+    addDetail("Packaging", humanize(item.packaging_condition));
+    addDetail("Functionality", humanize(item.functionality));
+    addDetail("Return reason", sentence(item.return_reason));
+    addDetail(item.decision_source === "manual" ? "Manual staff route" : "Recommendation", item.recommended_route);
+    const badge = document.createElement("span"); badge.className = "rtr-status rtr-status-" + (item.status || "").toLowerCase().replaceAll(" ", "-"); badge.textContent = item.status;
+    details.appendChild(badge); card.appendChild(details);
+    const td = document.createElement("div"); td.className = "staff-actions"; card.appendChild(td);
+    const base = `/api/staff/returns/${item.return_id}`;
+    const status = item.status;
+
+    if (
+      ["Submitted", "Pending Inspection", "Pending Approval"].includes(status)
+      && !item.decision_id
+    ) {
+      action(td, "Generate Recommendation", async () => {
+        await api(`${base}/recommend`, "POST");
+        notify(`Recommendation generated for return #${item.return_id}`);
+      });
+      action(td, "Manual Decision", async () => {
+        const choice = await manualDecisionDialog(item.return_id);
+        if (!choice) return false;
+        await api(`${base}/manual-decision`, "POST", choice);
+        notify(`Manual ${choice.final_route} decision saved for return #${item.return_id}. Move to Pending Approval to approve.`);
+      });
+    }
+
+    if (status === "Pending Approval" && item.decision_id) {
+      action(td, item.decision_source === "manual" ? "Approve Manual Decision" : "Approve / Override", async () => {
+        const choice = await approvalReviewDialog(item);
+        if (!choice) return false;
+        await api(`${base}/approve`, "POST", {
+          decision_id: item.decision_id,
+          final_route: choice.final_route,
+          override_reason: choice.override_reason
+        });
+        notify(`Return #${item.return_id} approved.`);
+      });
+    }
+
+    const nextStatuses = {
+      "Submitted": ["Pending Inspection", "Cancelled"],
+      "Pending Inspection": ["Pending Approval", "Cancelled"],
+      "Pending Approval": ["Cancelled"],
+      "Approved": ["Processing"],
+      "Processing": ["Completed"]
+    };
+
+    for (const nextStatus of nextStatuses[status] || []) {
+      action(td, nextStatus, async () => {
+        if (!confirm(
+          `Change return #${item.return_id} to ${nextStatus}?`
+        )) {
+          return false;
+        }
+
+        await api(`${base}/status`, "PATCH", {
+          new_status: nextStatus
+        });
+
+        notify(`Return #${item.return_id} moved to ${nextStatus}.`);
+      });
+    }
+
+    if (status === "Completed" || status === "Cancelled") {
+      td.textContent = "No further actions";
+    }
+
+    if (status === "Approved") {
+      approvedBody.appendChild(card);
+    } else if (status === "Processing") {
+      processingBody.appendChild(card);
+    } else if (status === "Completed") {
+      completedBody.appendChild(card);
+    } else {
+      body.appendChild(card);
+    }
+  }
+
+  for (const [container, emptyText] of [
+    [body, "No other return requests found."],
+    [approvedBody, "No approved returns awaiting processing."],
+    [processingBody, "No returns are currently processing."],
+    [completedBody, "No completed returns yet."]
+  ]) {
+    if (!container.children.length) {
+      const p = document.createElement("p");
+      p.className = "staff-empty-state";
+      p.textContent = emptyText;
+      container.appendChild(p);
+    }
+  }
+}
+
+document.getElementById("refresh").addEventListener("click", () => {
+  load().then(() => notify("Returns refreshed."))
+    .catch(error => notify(error.message, true));
+});
+
+document.getElementById("logout").addEventListener("click", async () => {
+  try {
+    await api("/api/logout", "POST");
+    window.location.href = "/login";
+  } catch (error) {
+    notify(error.message, true);
+  }
+});
+
+load().catch(error => {
+  notify(error.message, true);
+  if (error.message.includes("401") || error.message.includes("403")) {
+    document.getElementById("welcome").textContent =
+      "Please sign in with a staff account.";
+  }
+});
+</script></body></html>

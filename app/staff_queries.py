@@ -15,6 +15,7 @@ def get_staff_returns():
                 SELECT
                     r.return_id,
                     r.customer_id,
+                    r.product_id,
                     u.full_name,
                     p.product_name,
                     p.category,
@@ -25,7 +26,8 @@ def get_staff_returns():
                     r.status,
                     r.submitted_at,
                     d.decision_id,
-                    d.recommended_route
+                    d.recommended_route,
+                    d.rule_applied
                 FROM return_requests AS r
                 JOIN users AS u
                     ON r.customer_id = u.user_id
@@ -34,7 +36,8 @@ def get_staff_returns():
                 LEFT JOIN LATERAL (
                     SELECT
                         decision_id,
-                        recommended_route
+                        recommended_route,
+                        rule_applied
                     FROM routing_decisions
                     WHERE return_id = r.return_id
                     ORDER BY created_at DESC, decision_id DESC
@@ -62,17 +65,19 @@ def get_staff_returns():
         {
             "return_id": row[0],
             "customer_id": row[1],
-            "customer_name": row[2],
-            "product_name": row[3],
-            "category": row[4],
-            "return_reason": row[5],
-            "item_condition": row[6],
-            "packaging_condition": row[7],
-            "functionality": row[8],
-            "status": row[9],
-            "submitted_at": row[10].isoformat(),
-            "decision_id": row[11],
-            "recommended_route": row[12],
+            "product_id": row[2],
+            "customer_name": row[3],
+            "product_name": row[4],
+            "category": row[5],
+            "return_reason": row[6],
+            "item_condition": row[7],
+            "packaging_condition": row[8],
+            "functionality": row[9],
+            "status": row[10],
+            "submitted_at": row[11].isoformat(),
+            "decision_id": row[12],
+            "recommended_route": row[13],
+            "decision_source": "manual" if row[14] == "MANUAL_STAFF" else ("automatic" if row[14] else None),
         }
         for row in rows
     ]

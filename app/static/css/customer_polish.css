@@ -1,0 +1,71 @@
+/* Return-to-Route: customer dashboard polish */
+.dashboard-section .feature-card.rtr-product-card,
+.dashboard-section .feature-card.rtr-return-card { background:#fff; border:1px solid #dbe5f0; box-shadow:0 2px 10px rgba(23,43,77,.04); transition:box-shadow .2s,transform .2s; }
+.dashboard-section .feature-card.rtr-product-card:hover,
+.dashboard-section .feature-card.rtr-return-card:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(23,43,77,.10); }
+.rtr-product-card h3,.rtr-return-card h3 { overflow-wrap:anywhere; line-height:1.35; margin-bottom:12px; }
+.rtr-price { display:inline-block; font-size:1.35rem; font-weight:800; color:#0f766e; background:#eafaf4; border-radius:8px; padding:5px 12px; margin:0 0 12px; }
+.rtr-status { display:inline-flex; align-items:center; width:fit-content; border-radius:999px; padding:6px 12px; font-size:.85rem; font-weight:750; background:#edf2f7; color:#475569; border:1px solid #d5dee9; }
+.rtr-status-completed { background:#dcfce7; color:#166534; border-color:#86efac; }
+.rtr-status-approved { background:#dbeafe; color:#1d4ed8; border-color:#93c5fd; }
+.rtr-status-pending-approval,.rtr-status-pending-inspection,.rtr-status-processing { background:#fef3c7; color:#92400e; border-color:#fcd34d; }
+.rtr-status-cancelled { background:#f1f5f9; color:#64748b; border-color:#cbd5e1; }
+.rtr-return-card .rtr-status { margin:4px 0 12px; }
+.rtr-return-form { max-width:850px; }
+.rtr-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:22px; row-gap:10px; align-items:start; }
+.rtr-form-grid label { display:block; font-weight:650; color:#334155; margin:10px 0 0; }
+.rtr-form-grid select,.rtr-form-grid textarea { display:block; width:100%; min-width:0; box-sizing:border-box; padding:12px 14px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; color:#172b4d; font:inherit; margin:0 0 8px; }
+.rtr-form-grid select:focus,.rtr-form-grid textarea:focus { outline:3px solid #bfdbfe; border-color:#2563eb; }
+.rtr-form-grid label[for="return-order-item"],.rtr-form-grid #return-order-item,.rtr-form-grid label[for="return-reason"],.rtr-form-grid #return-reason { grid-column:1/-1; }
+.dashboard-section .rtr-submit { display:block; width:100%; max-width:850px; padding:14px 20px; margin-top:18px; font-size:1rem; }
+.rtr-history-heading { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+#return-request-message:not(:empty) { padding:12px 14px; background:#eff6ff; color:#1e40af; border-radius:8px; margin-top:14px; }
+@media(max-width:650px){ .rtr-form-grid { grid-template-columns:1fr; } .rtr-form-grid label,.rtr-form-grid select,.rtr-form-grid textarea { grid-column:1/-1; } }
+
+.rtr-form-grid .rtr-field { min-width:0; }
+.rtr-form-grid .rtr-field:first-child,.rtr-form-grid .rtr-field:nth-child(2) { grid-column:1/-1; }
+.rtr-form-grid .rtr-field label { margin-bottom:8px; }
+
+/* Dashboard header navigation */
+.dashboard-header {display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.dashboard-header > div:first-child {margin-right:auto}
+.rtr-home-link {color:#175cd3;text-decoration:none;font-weight:700;padding:10px 14px;border:1px solid #bfdbfe;border-radius:9px;background:#eff6ff}
+.rtr-home-link:hover {background:#dbeafe}
+
+/* Click-to-return purchase cards */
+.rtr-selectable-purchase{cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+.rtr-selectable-purchase:hover,.rtr-selectable-purchase:focus-visible{transform:translateY(-2px);border-color:#2563eb;box-shadow:0 8px 22px rgba(37,99,235,.14);outline-offset:3px}
+.rtr-select-hint{font-size:.83rem;color:#47627b;margin-top:12px}
+.rtr-selectable-purchase .rtr-select-hint{color:#155ac6;font-weight:650}
+.rtr-unavailable-purchase{opacity:.82}
+
+
+/* Step 59.83: use available dashboard width and readable status timeline */
+#return-request-section .rtr-return-form { width:100%; max-width:none; }
+#return-request-section .rtr-form-grid { width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:24px; row-gap:18px; }
+#return-request-section .rtr-form-grid .rtr-field { width:100%; min-width:0; }
+#return-request-section .rtr-form-grid .rtr-field:first-child,
+#return-request-section .rtr-form-grid .rtr-field:nth-child(2) { grid-column:1/-1; }
+#return-request-section .rtr-form-grid .rtr-field select,
+#return-request-section .rtr-form-grid .rtr-field textarea { width:100%; max-width:none; min-height:48px; box-sizing:border-box; }
+#return-request-section .rtr-form-grid .rtr-field textarea { min-height:112px; resize:vertical; }
+#return-request-section .rtr-submit { width:100%; max-width:none; }
+#history-container ul { list-style:none; padding:0; margin:12px 0; }
+#history-container .rtr-history-event { padding:16px 20px; margin:12px 0; border:1px solid #dbe5f0; border-left:4px solid #2563eb; border-radius:12px; background:#f8fbff; }
+.rtr-history-transition { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.rtr-history-arrow { color:#64748b; font-size:1.25rem; }
+.rtr-history-date { margin:10px 0 0; color:#52647b; font-size:.92rem; }
+@media(max-width:650px){#return-request-section .rtr-form-grid{grid-template-columns:1fr;}#return-request-section .rtr-form-grid .rtr-field{grid-column:1/-1;}}
+
+/* Step 59.84: compact product illustrations */
+.rtr-product-thumbnail { display:block; width:68px; height:68px; object-fit:contain; border-radius:12px; margin:0 0 12px; }
+.rtr-product-card .rtr-product-thumbnail { float:left; margin:0 15px 10px 0; }
+.rtr-product-card .rtr-price { clear:both; }
+.rtr-return-card .rtr-product-thumbnail { float:left; margin:0 15px 12px 0; }
+@media (max-width:480px) {.rtr-product-thumbnail{width:56px;height:56px;}}
+
+/* Openverse product photographs */
+.rtr-product-thumbnail{width:76px;height:76px;object-fit:contain;border-radius:12px;background:#fff;flex-shrink:0}
+.rtr-selected-product:not([hidden]),.rtr-history-product{display:flex;align-items:center;gap:16px;padding:12px;margin:12px 0;border:1px solid #dbe4ef;border-radius:12px;background:#f8fafc}
+.rtr-selected-product[hidden]{display:none!important}
+.rtr-selected-details p{margin:4px 0;color:#087d67;font-weight:700}

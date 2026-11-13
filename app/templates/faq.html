@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FAQs | Return-to-Route</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body{background:#f6f8fc;color:#1b2940} .faq-wrap{max-width:860px;margin:0 auto;padding:38px 20px 70px}
+    .faq-nav{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:32px}
+    .faq-nav a{background:white;border:1px solid #d7e1f0;border-radius:9px;padding:10px 15px;text-decoration:none;color:#175cd3;font-weight:700}
+    .faq-intro{color:#52617a;line-height:1.7;margin-bottom:28px}
+    .faq-group{margin-top:34px} .faq-group h2{font-size:1.3rem;margin-bottom:14px}
+    details{background:#fff;border:1px solid #dce5f0;border-radius:12px;margin-bottom:12px;padding:0 20px;box-shadow:0 2px 10px rgba(25,46,79,.04)}
+    summary{font-weight:700;cursor:pointer;padding:18px 0;line-height:1.5}details p{color:#47566e;line-height:1.75;margin:0 0 18px}
+    summary:focus-visible,a:focus-visible{outline:3px solid #175cd3;outline-offset:3px}
+  </style>
+</head>
+<body>
+<header class="site-header"><div class="container"><h1>Frequently Asked Questions</h1><p>Return-to-Route Help Center</p></div></header>
+<main class="faq-wrap">
+  <nav class="faq-nav" aria-label="Help navigation">
+    <a href="{{ url_for('main.home') }}">Home</a>
+    <a href="{{ url_for('main.dashboard_redirect') }}">My Dashboard</a>
+    <a href="{{ url_for('main.login_page') }}">Sign In</a>
+  </nav>
+  <p class="faq-intro">Answers to common questions about submitting returns, tracking progress, and reviewing routing decisions.</p>
+  <section class="faq-group" aria-labelledby="customer-faq"><h2 id="customer-faq">For customers</h2>
+    <details><summary>How do I submit a return request?</summary><p>Sign in to your customer account, open My Dashboard, and select an eligible purchase to begin a return request. Provide the requested product details and reason for return.</p></details>
+    <details><summary>How can I track my return?</summary><p>Open your customer dashboard to view your submitted returns, current statuses, and available return history.</p></details>
+    <details><summary>What do the return statuses mean?</summary><p>Submitted means your request was received. Pending Inspection means it is awaiting or undergoing inspection. Pending Approval means a staff decision is awaiting approval. Approved means a route has been authorized. Processing means the return is being handled. Completed means the workflow is finished. Cancelled means the return was stopped.</p></details>
+    <details><summary>Does submitting a return automatically approve it?</summary><p>No. Staff review and approval are separate steps in the return workflow.</p></details>
+  </section>
+  <section class="faq-group" aria-labelledby="staff-faq"><h2 id="staff-faq">For staff</h2>
+    <details><summary>What does Generate Recommendation do?</summary><p>The rule-based engine considers item condition, packaging condition, and functionality to suggest a route such as Restock, Refurbish, Recycle, or Dispose. A recommendation is not an automatic approval.</p></details>
+    <details><summary>Can I choose a route manually?</summary><p>Yes. The Manual Decision option lets authorized staff select a route and provide an explanation without first generating a system recommendation.</p></details>
+    <details><summary>Can I change a generated recommendation?</summary><p>Yes. During approval, authorized staff can accept the recommendation or choose another route and explain the change.</p></details>
+  </section>
+  <section class="faq-group" aria-labelledby="accounts-faq"><h2 id="accounts-faq">Accounts and access</h2>
+    <details><summary>How do I reach the correct dashboard?</summary><p>Select My Dashboard from the homepage. Signed-in customers are directed to the customer dashboard and signed-in staff to the staff dashboard. If you are signed out, you will be directed to Sign In.</p></details>
+    <details><summary>Can I access my account after signing out?</summary><p>Yes. Use Sign In on the homepage and enter your account credentials again. Signing out ends your active session.</p></details>
+  </section>
+</main>
+<footer class="site-footer"><div class="container"><p>&copy; 2026 Return-to-Route. <a href="{{ url_for('main.home') }}">Back to Home</a></p></div></footer>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard | Return-to-Route</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/customer_polish.css', v='5979') }}">
+    <script src="{{ url_for('static', filename='js/product_image_manifest.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/customer_dashboard.js') }}"
+            defer></script>
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="container dashboard-header">
+            <div>
+                <h1>Return-to-Route</h1>
+                <p>Customer Dashboard</p>
+            </div>
+
+            <a class="rtr-home-link" href="/">Home</a>
+            <button id="logout-button"
+                    class="button dashboard-logout"
+                    type="button">
+                Log Out
+            </button>
+        </div>
+    </header>
+
+    <main class="container dashboard-main">
+
+        <section class="dashboard-welcome">
+            <h2 id="customer-welcome">Welcome to Your Dashboard</h2>
+            <p>Manage your purchases and product returns in one place.</p>
+        </section>
+
+        <p id="dashboard-message"
+           role="status"
+           aria-live="polite"></p>
+
+        <section class="dashboard-navigation">
+            <a class="dashboard-nav-card"
+               href="#purchases-section">
+                <h3>My Purchases</h3>
+                <p>View your purchase history.</p>
+            </a>
+
+            <a class="dashboard-nav-card"
+               href="#return-request-section">
+                <h3>Request a Return</h3>
+                <p>Submit a new product return request.</p>
+            </a>
+
+            <a class="dashboard-nav-card"
+               href="#returns-section">
+                <h3>My Returns</h3>
+                <p>Track the status of your returns.</p>
+            </a>
+
+            <a class="dashboard-nav-card"
+               href="#history-section">
+                <h3>Return History</h3>
+                <p>Review updates to your return requests.</p>
+            </a>
+        </section>
+
+        <section class="dashboard-summary">
+            <article class="dashboard-stat">
+                <h3>My Purchases</h3>
+                <p id="purchase-count">—</p>
+                <span>Total purchased items</span>
+            </article>
+
+            <article class="dashboard-stat">
+                <h3>My Returns</h3>
+                <p id="return-count">—</p>
+                <span>Total return requests</span>
+            </article>
+        </section>
+
+        <section id="purchases-section" class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>My Purchases</h2>
+                <p>View items from your purchase history.</p>
+            </div>
+
+            <div id="purchases-container">
+                <p>Loading purchases...</p>
+            </div>
+        </section>
+
+        <section id="return-request-section" class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>Request a Return</h2>
+                <p>Select a purchased item and describe its condition.</p>
+            </div>
+
+            <form id="return-request-form" class="rtr-return-form">
+                <div id="rtr-selected-product" class="rtr-selected-product" hidden></div>
+                <div class="rtr-form-grid">
+                <div class="rtr-field">
+<label for="return-order-item">Purchased Item</label>
+                <select id="return-order-item" name="order_item_id" required>
+                    <option value="">Select a purchased item</option>
+                </select>
+</div>
+
+                <div class="rtr-field">
+<label for="return-reason">Reason for Return</label>
+                <textarea id="return-reason"
+                          name="return_reason"
+                          rows="3"
+                          required></textarea>
+</div>
+
+                <div class="rtr-field">
+<label for="item-condition">Item Condition</label>
+                <select id="item-condition" name="item_condition" required>
+                    <option value="">Select item condition</option>
+                    <option value="new">New / Unused</option>
+                    <option value="good">Good / Used</option>
+                    <option value="severely_damaged">Severely Damaged</option>
+                    <option value="damaged">Damaged</option>
+                </select>
+</div>
+
+                <div class="rtr-field">
+<label for="packaging-condition">Packaging Condition</label>
+                <select id="packaging-condition"
+                        name="packaging_condition"
+                        required>
+                    <option value="">Select packaging condition</option>
+                    <option value="sealed">Sealed Packaging</option>
+                    <option value="opened">Opened Packaging</option>
+                    <option value="damaged">Damaged Packaging</option>
+                    <option value="missing">Missing Packaging</option>
+                </select>
+</div>
+
+                <div class="rtr-field">
+<label for="functionality">Product Functionality</label>
+                <select id="functionality" name="functionality" required>
+                    <option value="">Select functionality</option>
+                    <option value="working">Fully Working</option>
+                    <option value="partially_working">Partially Working</option>
+                    <option value="not_applicable">Not Applicable</option>
+                    <option value="not_working">Not Working</option>
+                </select>
+</div>
+
+                </div>
+                <button type="submit" class="button rtr-submit">
+                    Submit Return Request
+                </button>
+
+                <p id="return-request-message"
+                   role="status"
+                   aria-live="polite"></p>
+            </form>
+        </section>
+
+        <section id="returns-section" class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>My Returns</h2>
+                <p>Track your submitted return requests.</p>
+            </div>
+
+            <div id="returns-container">
+                <p>Loading returns...</p>
+            </div>
+        </section>
+
+        <section id="history-section" class="dashboard-section">
+            <div class="dashboard-section-header">
+                <h2>Return History</h2>
+                <p>Review status changes for your return requests.</p>
+            </div>
+
+            <div id="history-container">
+                <p>Select a return to view its status history.</p>
+            </div>
+        </section>
+
+    </main>
+</body>
+</html>

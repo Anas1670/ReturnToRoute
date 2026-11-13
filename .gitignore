@@ -26,3 +26,18 @@ __pycache__/
 
 # Local logs
 *.log
+
+# Local backups and temporary review files
+*.before_*
+*.bak
+*.backup*
+*backup*.csv
+photo_repair_backups/
+photo_review_candidates/
+app/static/images/catalog_quarantine/
+
+# Local image research and generated reports
+.rtr_photo_search_progress.json
+PRODUCT_IMAGE_EXPANSION_REPORT.csv
+PRODUCT_IMAGE_QUARANTINE.csv
+PRODUCT_IMAGE_REVIEW.csv

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staff Dashboard | Return-to-Route</title>
+<link rel="stylesheet" href="/static/css/style.css"><link rel="stylesheet" href="/static/css/customer_polish.css"><link rel="stylesheet" href="/static/css/staff_polish.css">
+<script src="/static/js/product_image_manifest.js"></script></head><body>
+<header class="site-header"><div class="container dashboard-header"><div><h1>Return-to-Route</h1><p>Staff Dashboard</p></div><a class="rtr-home-link" href="/">Home</a><button id="logout" class="button dashboard-logout">Log Out</button></div></header>
+<main class="container dashboard-main"><section class="dashboard-welcome"><h2>Welcome to Staff Return Management</h2><p id="welcome">Loading staff account...</p><p>Review products, generate routing recommendations, and approve return decisions.</p></section>
+<section class="dashboard-navigation"><a class="dashboard-nav-card" href="#staff-returns"><h3>Return Requests</h3><p>Review incoming requests and inspect product details.</p></a><a class="dashboard-nav-card" href="#staff-returns"><h3>Recommendations</h3><p>Generate smart routing suggestions.</p></a><a class="dashboard-nav-card" href="#staff-returns"><h3>Approvals</h3><p>Approve or override recommendations.</p></a><a class="dashboard-nav-card" href="#staff-returns"><h3>Processing</h3><p>Advance approved returns to completion.</p></a></section>
+<section class="dashboard-summary"><article class="dashboard-stat"><h3>Total Returns</h3><p id="count">—</p><span>All return requests</span></article><article class="dashboard-stat"><h3>Active Returns</h3><p id="open-count">—</p><span>Not yet completed or cancelled</span></article><article class="dashboard-stat"><h3>Awaiting Approval</h3><p id="approval-count">—</p><span>Ready for staff decisions</span></article></section>
+<p id="message" role="status" aria-live="polite"></p>
+<section class="dashboard-section" id="staff-returns"><div class="dashboard-section-header staff-heading"><div><h2>Return Requests</h2><p>Manage customer returns and routing decisions.</p></div><button id="refresh" class="staff-action staff-recommend">Refresh Returns</button></div><div id="returns-body" class="staff-return-grid"></div></section>
+</main><script>
+"use strict";
+
+const body = document.getElementById("returns-body");
+const message = document.getElementById("message");
+let busy = false;
+
+function notify(text, error = false) {
+  message.textContent = text;
+  message.className = error ? "error" : "success";
+}
+
+async function api(url, method = "GET", payload) {
+  const options = { method, credentials: "same-origin" };
+  if (payload !== undefined) {
+    options.headers = { "Content-Type": "application/json" };
+    options.body = JSON.stringify(payload);
+  }
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed (${response.status})`);
+  }
+  return data;
+}
+
+function cell(row, value) {
+  const td = document.createElement("td");
+  td.textContent = value == null ? "—" : String(value);
+  row.appendChild(td);
+  return td;
+}
+
+function action(container, label, handler) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = label;
+  button.className = "staff-action " + (label.includes("Cancel") ? "staff-danger" : label.includes("Approve") ? "staff-approve" : label.includes("Recommend") ? "staff-recommend" : label.includes("Manual") ? "staff-approve" : "staff-progress");
+  button.addEventListener("click", async () => {
+    if (busy) return;
+    busy = true;
+    document.querySelectorAll("button").forEach(b => b.disabled = true);
+    try {
+      const completed = await handler();
+      if (completed !== false) await load();
+    } catch (error) {
+      notify(error.message, true);
+    } finally {
+      busy = false;
+      document.querySelectorAll("button").forEach(b => b.disabled = false);
+    }
+  });
+  container.appendChild(button);
+}
+
+async function load() {
+  const data = await api("/api/staff/dashboard");
+  document.getElementById("welcome").textContent =
+    `Signed in as ${data.user.full_name}`;
+  document.getElementById("count").textContent = data.return_count;
+  body.replaceChildren();
+
+  document.getElementById("open-count").textContent = data.returns.filter(x => !["Completed", "Cancelled"].includes(x.status)).length;
+  document.getElementById("approval-count").textContent = data.returns.filter(x => x.status === "Pending Approval").length;
+  for (const item of data.returns) {
+    const card = document.createElement("article");
+    card.className = "staff-return-card";
+    const top = document.createElement("div"); top.className = "staff-card-top";
+    const img = document.createElement("img"); img.className = "staff-product-image";
+    img.loading = "lazy"; img.alt = `Photo of ${item.product_name}`;
+    const kind = ["headphones","backpack","notebook","organizer","speaker","bottle","pillow","shirt","mouse","cable","stand","lamp","towel","case","mug"].find(x => (item.product_name || "").toLowerCase().includes(x)) || "package";
+    const fallback = `/static/images/product-thumbnails/${kind}.svg`;
+    const file = (window.RTR_PRODUCT_IMAGES || {})[String(item.product_id)];
+    img.onerror = () => { img.onerror = null; img.src = fallback; };
+    img.src = file ? `/static/images/catalog/${encodeURIComponent(file)}` : fallback;
+    top.appendChild(img);
+    const info = document.createElement("div");
+    const name = document.createElement("h3"); name.textContent = item.product_name; info.appendChild(name);
+    const sub = document.createElement("p"); sub.className = "muted"; sub.textContent = `Return #${item.return_id} · ${item.category || "Product"}`; info.appendChild(sub);
+    top.appendChild(info); card.appendChild(top);
+    const details = document.createElement("div"); details.className = "staff-card-details";
+    const addDetail = (label, value) => { const p = document.createElement("p"); const b = document.createElement("strong"); b.textContent = label + ": "; p.appendChild(b); p.appendChild(document.createTextNode(value || "—")); details.appendChild(p); };
+    const humanize = value => value == null || value === "" ? "—" : String(value).replaceAll("_", " ").replace(/\b\w/g, ch => ch.toUpperCase());
+    const sentence = value => {
+      const text = String(value || "").trim();
+      return text ? (/[.!?]$/.test(text) ? text : text + ".") : "—";
+    };
+    addDetail("Customer", item.customer_name);
+    addDetail("Item condition", humanize(item.item_condition));
+    addDetail("Packaging", humanize(item.packaging_condition));
+    addDetail("Functionality", humanize(item.functionality));
+    addDetail("Return reason", sentence(item.return_reason));
+    addDetail(item.decision_source === "manual" ? "Manual staff route" : "Recommendation", item.recommended_route);
+    const badge = document.createElement("span"); badge.className = "rtr-status rtr-status-" + (item.status || "").toLowerCase().replaceAll(" ", "-"); badge.textContent = item.status;
+    details.appendChild(badge); card.appendChild(details);
+    const td = document.createElement("div"); td.className = "staff-actions"; card.appendChild(td);
+    const base = `/api/staff/returns/${item.return_id}`;
+    const status = item.status;
+
+    if (
+      ["Submitted", "Pending Inspection", "Pending Approval"].includes(status)
+      && !item.decision_id
+    ) {
+      action(td, "Generate Recommendation", async () => {
+        await api(`${base}/recommend`, "POST");
+        notify(`Recommendation generated for return #${item.return_id}`);
+      });
+      action(td, "Manual Decision", async () => {
+        const route = prompt("Choose a route: Restock, Refurbish, Recycle, or Dispose");
+        if (route === null) return false;
+        const finalRoute = route.trim();
+        if (!["Restock", "Refurbish", "Recycle", "Dispose"].includes(finalRoute)) {
+          throw new Error("Select Restock, Refurbish, Recycle, or Dispose exactly.");
+        }
+        const reason = prompt("Why did you choose this route? (required)");
+        if (reason === null) return false;
+        if (!reason.trim()) throw new Error("A manual decision reason is required.");
+        if (!confirm(`Save manual ${finalRoute} decision for return #${item.return_id}? Approval will still be required.`)) return false;
+        await api(`${base}/manual-decision`, "POST", { final_route: finalRoute, reason: reason.trim() });
+        notify(`Manual ${finalRoute} decision saved for return #${item.return_id}. Move to Pending Approval to approve.`);
+      });
+    }
+
+    if (status === "Pending Approval" && item.decision_id) {
+      action(td, item.decision_source === "manual" ? "Approve Manual Decision" : "Approve / Override", async () => {
+        const route = item.decision_source === "manual"
+          ? item.recommended_route
+          : prompt("Final route: Restock, Refurbish, Recycle, or Dispose", item.recommended_route || "");
+
+        if (route === null) return false;
+
+        const finalRoute = route.trim();
+        const allowed = ["Restock", "Refurbish", "Recycle", "Dispose"];
+
+        if (!allowed.includes(finalRoute)) {
+          throw new Error("Invalid route.");
+        }
+
+        let reason = null;
+
+        if (finalRoute !== item.recommended_route) {
+          reason = prompt("Reason for overriding recommendation:");
+
+          if (reason === null) return false;
+
+          if (!reason.trim()) {
+            throw new Error("Override reason is required.");
+          }
+        }
+
+        if (!confirm(`Approve return #${item.return_id}?`)) {
+          return false;
+        }
+
+        await api(`${base}/approve`, "POST", {
+          decision_id: item.decision_id,
+          final_route: finalRoute,
+          override_reason: reason
+        });
+
+        notify(`Return #${item.return_id} approved.`);
+      });
+    }
+
+    const nextStatuses = {
+      "Submitted": ["Pending Inspection", "Cancelled"],
+      "Pending Inspection": ["Pending Approval", "Cancelled"],
+      "Pending Approval": ["Cancelled"],
+      "Approved": ["Processing"],
+      "Processing": ["Completed"]
+    };
+
+    for (const nextStatus of nextStatuses[status] || []) {
+      action(td, nextStatus, async () => {
+        if (!confirm(
+          `Change return #${item.return_id} to ${nextStatus}?`
+        )) {
+          return false;
+        }
+
+        await api(`${base}/status`, "PATCH", {
+          new_status: nextStatus
+        });
+
+        notify(`Return #${item.return_id} moved to ${nextStatus}.`);
+      });
+    }
+
+    if (status === "Completed" || status === "Cancelled") {
+      td.textContent = "No further actions";
+    }
+
+    body.appendChild(card);
+  }
+
+  if (!data.returns.length) {
+    const p = document.createElement("p"); p.textContent = "No return requests found."; body.appendChild(p);
+  }
+}
+
+document.getElementById("refresh").addEventListener("click", () => {
+  load().then(() => notify("Returns refreshed."))
+    .catch(error => notify(error.message, true));
+});
+
+document.getElementById("logout").addEventListener("click", async () => {
+  try {
+    await api("/api/logout", "POST");
+    window.location.href = "/login";
+  } catch (error) {
+    notify(error.message, true);
+  }
+});
+
+load().catch(error => {
+  notify(error.message, true);
+  if (error.message.includes("401") || error.message.includes("403")) {
+    document.getElementById("welcome").textContent =
+      "Please sign in with a staff account.";
+  }
+});
+</script></body></html>

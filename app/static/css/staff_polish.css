@@ -1,0 +1,25 @@
+/* Staff dashboard shares customer dashboard layout and colors. */
+.staff-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.staff-return-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:20px}
+.staff-return-card{border:1px solid #dbe5f0;border-radius:16px;background:#f8fbff;padding:22px;box-shadow:0 2px 10px #172b4d0a;transition:transform .2s ease,box-shadow .2s ease}
+.staff-return-card:hover{transform:translateY(-4px);box-shadow:0 14px 28px #172b4d20}
+.staff-card-top{display:flex;align-items:center;gap:16px;min-width:0}
+.staff-product-image{width:92px;height:92px;object-fit:contain;border-radius:12px;background:#fff;flex-shrink:0}
+.staff-card-top h3{font-size:1.1rem;line-height:1.35;margin:0 0 6px;overflow-wrap:anywhere}
+.staff-card-top p{margin:0}.staff-card-details{margin:16px 0}.staff-card-details p{font-size:.9rem;margin:8px 0;overflow-wrap:anywhere}.staff-card-details strong{color:#334155}
+.staff-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.staff-actions:empty{display:none}
+.dashboard-section .staff-action,.staff-action{appearance:none;border:0;border-radius:10px;padding:12px 17px;font-size:.92rem;font-weight:750;color:#fff;background:#175cd3;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;box-shadow:0 3px 8px #172b4d18}
+.dashboard-section .staff-action:hover:not(:disabled),.staff-action:hover:not(:disabled){transform:scale(1.07);filter:brightness(1.07);box-shadow:0 9px 20px #172b4d33}
+.staff-recommend{background:#2563eb!important}.staff-approve{background:#059669!important}.staff-progress{background:#7c3aed!important}.staff-danger{background:#dc2626!important}
+.staff-action:disabled{opacity:.5;cursor:wait}.staff-action:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+#message:not(:empty){padding:12px 16px;border-radius:10px;margin:15px 0;background:#eafaf4;color:#087443}#message.error{background:#fef2f2;color:#b42318}
+.muted{color:#64748b}.staff-return-card .rtr-status{margin-top:8px}
+@media(prefers-reduced-motion:reduce){.staff-return-card,.staff-action{transition:none!important}}
+
+/* Dedicated processing and completed return sections. */
+html{scroll-behavior:smooth}
+.staff-status-section{margin-top:30px;scroll-margin-top:24px}
+.staff-section-count{display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;vertical-align:middle;border-radius:999px;background:#e7efff;color:#175cd3;padding:4px 10px;margin-left:6px}
+.staff-empty-state{color:#64748b;padding:20px;border:1px dashed #cbd5e1;border-radius:12px;background:#fff}
+.dashboard-nav-card:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
