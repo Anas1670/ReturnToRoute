@@ -11,6 +11,7 @@ from app.decorators import role_required
 from app.customer_queries import get_customer_returns
 from app.staff_queries import get_staff_returns
 from app.orders import get_customer_purchases
+from app.demo_data import assert_staff_assignment
 from app.queries import get_return_request
 from app.history import get_return_history
 
@@ -106,7 +107,7 @@ def staff_dashboard():
     Return staff information and customer return requests.
     """
     staff_id = int(current_user.id)
-    returns = get_staff_returns()
+    returns = get_staff_returns(staff_id)
 
     return jsonify({
         "message": "Welcome to your staff dashboard",
@@ -224,6 +225,11 @@ def staff_update_return_status(return_id):
         }), 400
 
     try:
+        assert_staff_assignment(int(current_user.id), return_id)
+    except PermissionError:
+        return jsonify({"error": "Return case not assigned to this staff member."}), 403
+
+    try:
         result = update_return_status(
             return_id=return_id,
             new_status=new_status,
@@ -256,6 +262,11 @@ def staff_generate_recommendation(return_id):
     Generate and save a routing recommendation for a return.
     Only authenticated staff members can perform this action.
     """
+    try:
+        assert_staff_assignment(int(current_user.id), return_id)
+    except PermissionError:
+        return jsonify({"error": "Return case not assigned to this staff member."}), 403
+
     try:
         result = save_routing_decision(return_id=return_id)
 
@@ -302,6 +313,11 @@ def staff_approve_return(return_id):
         }), 400
 
     try:
+        assert_staff_assignment(int(current_user.id), return_id)
+    except PermissionError:
+        return jsonify({"error": "Return case not assigned to this staff member."}), 403
+
+    try:
         result = approve_routing_decision(
             return_id=return_id,
             decision_id=decision_id,
@@ -332,6 +348,11 @@ def staff_manual_decision(return_id):
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         return jsonify({"error": "A JSON object is required."}), 400
+    try:
+        assert_staff_assignment(int(current_user.id), return_id)
+    except PermissionError:
+        return jsonify({"error": "Return case not assigned to this staff member."}), 403
+
     try:
         result = save_manual_decision(
             return_id=return_id,

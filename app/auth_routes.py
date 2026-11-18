@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash
 
 from app.db import get_db_connection
 from app.login import authenticate_user
+from app.demo_data import seed_customer, seed_staff
 
 
 auth = Blueprint("auth", __name__)
@@ -147,6 +148,10 @@ def register():
                 user_id, saved_name, saved_email, role = (
                     cur.fetchone()
                 )
+                if role == "customer":
+                    seed_customer(cur, user_id)
+                else:
+                    seed_staff(cur, user_id)
 
             conn.commit()
 
@@ -154,6 +159,15 @@ def register():
         return jsonify({
             "error": "An account with this email already exists."
         }), 409
+
+    # Registration and demo-data seeding have committed successfully.
+    # Start a session for the newly registered account, just like /api/login.
+    user = authenticate_user(saved_email, password)
+    if user is None:
+        return jsonify({
+            "error": "Account created, but automatic sign-in failed. Please sign in manually."
+        }), 500
+    login_user(user)
 
     return jsonify({
         "message": "Account created successfully.",

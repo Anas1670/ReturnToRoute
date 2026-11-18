@@ -74,7 +74,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            window.location.href = "/login";
+            const role = data.user && data.user.role;
+            window.location.replace(
+                role === "staff" ? "/staff/dashboard" : "/customer/dashboard"
+            );
 
         } catch (error) {
             message.textContent =

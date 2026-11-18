@@ -1,3 +1,21 @@
+
+<style>
+/* Homepage branding alignment */
+.rtr-centered-brand-title {
+    text-align: center !important;
+    margin: 24px auto 12px !important;
+    width: 100% !important;
+    line-height: 1.25 !important;
+}
+
+/* Center the subtitle directly following the title */
+.rtr-centered-brand-title + p {
+    text-align: center !important;
+    margin: 0 auto 24px !important;
+    width: 100% !important;
+    line-height: 1.6 !important;
+}
+</style>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +29,11 @@
 .rtr-auth-nav a.rtr-auth-primary {background:#175cd3;color:white;border-color:#175cd3}
 .rtr-auth-nav a:hover {filter:brightness(.94)}
 </style>
+
+    <link rel="stylesheet" href="/static/css/header_theme.css?v=2">
+<link rel="icon" type="image/png" sizes="256x256" href="/static/favicon-color.png?v=20261116-2">
+<link rel="shortcut icon" type="image/x-icon" href="/static/favicon.ico?v=20261116-2">
+<link rel="apple-touch-icon" href="/static/favicon-color.png?v=20261116-2">
 </head>
 <body>
     <header class="site-header">
@@ -21,7 +44,7 @@
         <a href="{{ url_for('main.faq_page') }}">FAQs</a>
 </nav>
         <div class="container">
-            <h1>Return-to-Route</h1>
+            <h1 class="rtr-centered-brand-title">Return-to-Route</h1>
             <p>Smart Product Return Management System</p>
         </div>
     </header>

@@ -111,6 +111,13 @@ def create_return_request(
 
             result = cur.fetchone()
 
+            # Assign real customer returns to one staff member, never all staff.
+            cur.execute("""INSERT INTO staff_return_assignments (return_id, staff_id, is_demo)
+                           SELECT %s, user_id, FALSE FROM users
+                           WHERE role = 'staff'
+                           ORDER BY user_id LIMIT 1
+                           ON CONFLICT (return_id) DO NOTHING""", (result[0],))
+
             # Automatic exception: simulated refund only, no payment processor.
             cur.execute(
                 "SELECT unit_price FROM order_items WHERE order_item_id = %s",

@@ -1,7 +1,7 @@
 from app.db import get_db_connection
 
 
-def get_staff_returns():
+def get_staff_returns(staff_id):
     """
     Retrieve return requests for the staff dashboard.
 
@@ -29,6 +29,8 @@ def get_staff_returns():
                     d.recommended_route,
                     d.rule_applied
                 FROM return_requests AS r
+                JOIN staff_return_assignments AS a
+                    ON a.return_id = r.return_id AND a.staff_id = %s
                 JOIN users AS u
                     ON r.customer_id = u.user_id
                 JOIN products AS p
@@ -56,7 +58,8 @@ def get_staff_returns():
                     END,
                     r.submitted_at DESC,
                     r.return_id DESC;
-                """
+                """,
+                (staff_id,)
             )
 
             rows = cur.fetchall()

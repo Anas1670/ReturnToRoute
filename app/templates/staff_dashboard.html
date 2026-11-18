@@ -2,7 +2,10 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Staff Dashboard | Return-to-Route</title>
 <link rel="stylesheet" href="/static/css/style.css"><link rel="stylesheet" href="/static/css/customer_polish.css"><link rel="stylesheet" href="/static/css/staff_polish.css">
-<script src="/static/js/product_image_manifest.js"></script></head><body>
+<script src="/static/js/product_image_manifest.js"></script>
+    <link rel="stylesheet" href="/static/css/header_theme.css?v=2">
+<link rel="icon" type="image/png" href="/static/favicon-color.png?v=3">
+</head><body>
 <header class="site-header"><div class="container dashboard-header"><div><h1>Return-to-Route</h1><p>Staff Dashboard</p></div><a class="rtr-home-link" href="/">Home</a><button id="logout" class="button dashboard-logout">Log Out</button></div></header>
 <main class="container dashboard-main"><section class="dashboard-welcome"><h2>Welcome to Staff Return Management</h2><p id="welcome">Loading staff account...</p><p>Review products, generate routing recommendations, and approve return decisions.</p></section>
 <section class="dashboard-navigation"><a class="dashboard-nav-card" href="#staff-returns"><h3>Return Requests</h3><p>Review incoming requests and inspect product details.</p></a><a class="dashboard-nav-card" href="#staff-approved"><h3>Approved</h3><p>Review approved returns awaiting processing.</p></a><a class="dashboard-nav-card" href="#staff-processing"><h3>Processing</h3><p>View returns currently being processed.</p></a><a class="dashboard-nav-card" href="#staff-completed"><h3>Completed</h3><p>Review finished return requests.</p></a></section>
@@ -11,11 +14,23 @@
 <article class="dashboard-stat"><h3>Processing Returns</h3><p id="processing-stat-count">—</p><span>Currently being processed</span></article>
 <article class="dashboard-stat"><h3>Completed Returns</h3><p id="completed-stat-count">—</p><span>Successfully completed requests</span></article></section>
 <p id="message" role="status" aria-live="polite"></p>
-<section class="dashboard-section" id="staff-returns"><div class="dashboard-section-header staff-heading"><div><h2>Return Requests</h2><p>Manage customer returns and routing decisions.</p></div><button id="refresh" class="staff-action staff-recommend">Refresh Returns</button></div><div id="returns-body" class="staff-return-grid"></div></section>
-<section class="dashboard-section staff-status-section" id="staff-approved"><div class="dashboard-section-header staff-heading"><div><h2>Approved Returns <span id="approved-count" class="staff-section-count">0</span></h2><p>Approved returns awaiting processing. Select Processing to begin work.</p></div></div><div id="approved-body" class="staff-return-grid"></div></section>
-<section class="dashboard-section staff-status-section" id="staff-processing"><div class="dashboard-section-header staff-heading"><div><h2>Processing Returns <span id="processing-count" class="staff-section-count">0</span></h2><p>Approved returns currently being processed. Mark them Completed when finished.</p></div></div><div id="processing-body" class="staff-return-grid"></div></section>
-<section class="dashboard-section staff-status-section" id="staff-completed"><div class="dashboard-section-header staff-heading"><div><h2>Completed Returns <span id="completed-count" class="staff-section-count">0</span></h2><p>Previously completed returns, shown for reference.</p></div></div><div id="completed-body" class="staff-return-grid"></div></section>
-</main><script>
+<section class="dashboard-section" id="staff-returns"><div class="dashboard-section-header staff-heading"><div><h2>Return Requests</h2><p>Manage customer returns and routing decisions.</p></div><div class="staff-requests-actions"><button id="refresh" class="staff-action staff-recommend staff-nav-button">Refresh Returns</button><a class="staff-back-to-requests staff-nav-button" href="#" id="staff-back-to-top" aria-label="Back to top of dashboard">↑ Back to Top</a></div></div><div id="returns-body" class="staff-return-grid"></div></section>
+<section class="dashboard-section staff-status-section" id="staff-approved"><div class="dashboard-section-header staff-heading"><div><h2>Approved Returns <span id="approved-count" class="staff-section-count">0</span></h2><p>Approved returns awaiting processing. Select Processing to begin work.</p></div><div class="staff-requests-actions"><a class="staff-back-to-requests staff-nav-button" href="#staff-returns" aria-label="Back to Return Requests">↑ Return Requests</a><a class="staff-back-to-requests staff-nav-button" href="#" aria-label="Back to top of dashboard">↑ Back to Top</a></div></div><div id="approved-body" class="staff-return-grid"></div></section>
+<section class="dashboard-section staff-status-section" id="staff-processing"><div class="dashboard-section-header staff-heading"><div><h2>Processing Returns <span id="processing-count" class="staff-section-count">0</span></h2><p>Approved returns currently being processed. Mark them Completed when finished.</p></div><div class="staff-requests-actions"><a class="staff-back-to-requests staff-nav-button" href="#staff-returns" aria-label="Back to Return Requests">↑ Return Requests</a><a class="staff-back-to-requests staff-nav-button" href="#" aria-label="Back to top of dashboard">↑ Back to Top</a></div></div><div id="processing-body" class="staff-return-grid"></div></section>
+<section class="dashboard-section staff-status-section" id="staff-completed"><div class="dashboard-section-header staff-heading"><div><h2>Completed Returns <span id="completed-count" class="staff-section-count">0</span></h2><p>Previously completed returns, shown for reference.</p></div><div class="staff-requests-actions"><a class="staff-back-to-requests staff-nav-button" href="#staff-returns" aria-label="Back to Return Requests">↑ Return Requests</a><a class="staff-back-to-requests staff-nav-button" href="#" aria-label="Back to top of dashboard">↑ Back to Top</a></div></div><div id="completed-body" class="staff-return-grid"></div></section>
+</main><style>
+html { scroll-behavior: smooth; }
+.dashboard-section { scroll-margin-top: 18px; }
+.staff-back-to-requests { display: inline-flex; align-items: center; justify-content: center; padding: 11px 16px; border-radius: 9px; background: #155bd4; color: white; text-decoration: none; font-weight: 700; white-space: nowrap; }
+.staff-back-to-requests:hover, .staff-back-to-requests:focus-visible { background: #0d419f; color: white; }
+/* Uniform navigation controls across every staff section. */
+.staff-requests-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
+.staff-requests-actions .staff-nav-button { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-width: 172px; min-height: 44px; padding: 10px 14px; margin: 0; border: 0; border-radius: 9px; font: inherit; font-size: 14px; font-weight: 700; line-height: 1.25; text-align: center; text-decoration: none; cursor: pointer; }
+.staff-requests-actions .staff-nav-button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+@media (max-width: 650px) { .staff-requests-actions { justify-content: flex-start; } .staff-requests-actions .staff-nav-button { min-width: 0; flex: 1 1 145px; } }
+.staff-status-section .dashboard-section-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style><script>
 "use strict";
 
 const body = document.getElementById("returns-body");
@@ -59,7 +74,16 @@ function action(container, label, handler) {
     document.querySelectorAll("button").forEach(b => b.disabled = true);
     try {
       const completed = await handler();
-      if (completed !== false) await load();
+      if (completed !== false) {
+        await load();
+        // Navigate only after the refreshed card has reached its new section.
+        if (typeof completed === "string") {
+          const destination = document.getElementById(completed);
+          if (destination) {
+            destination.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      }
     } catch (error) {
       notify(error.message, true);
     } finally {
@@ -259,6 +283,7 @@ async function load() {
           override_reason: choice.override_reason
         });
         notify(`Return #${item.return_id} approved.`);
+        return "staff-approved";
       });
     }
 
@@ -283,6 +308,7 @@ async function load() {
         });
 
         notify(`Return #${item.return_id} moved to ${nextStatus}.`);
+        return ({ "Approved": "staff-approved", "Processing": "staff-processing", "Completed": "staff-completed" })[nextStatus] || "staff-returns";
       });
     }
 
