@@ -2,8 +2,9 @@
 
 ## Deployment
 1. Open AWS CloudShell in us-east-1.
-2. Upload ReturnToRoute_AWS_Deployment.zip (Please download it from the repository located in the same folder as this readme.)
-3. Execute the following commands:
+2. Download ReturnToRoute_AWS_Deployment.zip from the repository which is in the same folder as this README.
+3. Upload ReturnToRoute_AWS_Deployment.zip to AWS CloudShell. This zip file contains the complete application source code and deployment scripts required to automatically provision the Amazon EC2 instance and Amazon RDS PostgreSQL database used by the application.
+4. Execute the following commands:
 
     unzip -o ReturnToRoute_AWS_Deployment.zip
    
