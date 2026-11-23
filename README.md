@@ -6,10 +6,12 @@
 3. Execute the following commands:
 
     unzip -o ReturnToRoute_AWS_Deployment.zip
+   
     cd ReturnToRoute_Deploy_Kit
+   
     bash deploy-cloudshell.sh
 
-4. Open the website URL displayed after deployment completes.
+5. Open the website URL displayed after deployment completes.
 
 Deployment may take approximately 15–30 minutes.
 
